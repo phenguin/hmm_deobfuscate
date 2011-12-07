@@ -1,7 +1,10 @@
+import pdb
+
 class HMM(object):
 # """Implmentation of a Hidden Markov Model"""
   def __init__(self, states, obs, trans_probs, output_probs):
     self.states = states # States
+    self.num_states = len(self.states)
     self.obs = obs # Possible observations
 
     # Dictionary of nested dictionaries where
@@ -14,8 +17,9 @@ class HMM(object):
     # observing observation given that the HMM is in state 'state'
     self.output_probs = output_probs 
 
-  def viterbi(self,observed,start_dist):
+  def viterbi(self,observed):
     # initialize
+    start_dist = dict([(s,1/float(self.num_states)) for s in self.states])
     T = len(observed)
     V = [{}]
     P = [{}]
@@ -32,7 +36,7 @@ class HMM(object):
       for k in self.states:
         cur_max = 0
         for y in self.states:
-          val = self.trans_probs[y][k] * V[t-1][y] 
+          val = self.trans_probs[y].get(k,0) * V[t-1][y] 
           if val > cur_max:
             cur_max = val
             best_state = y
@@ -41,7 +45,7 @@ class HMM(object):
 
     # Now compute the most likely path
     temp_max = 0
-    for y in states:
+    for y in self.states:
       if V[T-1][y] > temp_max:
         best = y
         temp_max = V[T-1][y]
@@ -53,18 +57,18 @@ class HMM(object):
     return state_seq
     
 # Test data----------------------------------------
-states = ('rainy','sunny')
-observations = ('walk','shop','clean')
+#states = ('rainy','sunny')
+#observations = ('walk','shop','clean')
 
-transitions = {'rainy' : {'rainy' : 0.7,'sunny' : 0.3},
-    'sunny' : {'rainy' : 0.4,'sunny' : 0.6}}
+#transitions = {'rainy' : {'rainy' : 0.7,'sunny' : 0.3},
+    #'sunny' : {'rainy' : 0.4,'sunny' : 0.6}}
 
-obs_probs = {'rainy' : {'walk' : 0.1,'shop' : 0.4,'clean' : 0.5},
-    'sunny' : {'walk' : 0.6,'shop' : 0.3,'clean' : 0.1}}
+#obs_probs = {'rainy' : {'walk' : 0.1,'shop' : 0.4,'clean' : 0.5},
+    #'sunny' : {'walk' : 0.6,'shop' : 0.3,'clean' : 0.1}}
 
-weather_HMM = HMM(states,observations,transitions,obs_probs)
+#weather_HMM = HMM(states,observations,transitions,obs_probs)
 
-observed = ['walk','shop','clean','clean','walk','walk','walk','clean']
-initial_dist = {'rainy' : 0.5,'sunny' : 0.5}
+#observed = ['walk','shop','clean','clean','walk','walk','walk','clean']
+#initial_dist = {'rainy' : 0.5,'sunny' : 0.5}
 
-weather_HMM.viterbi(observed,initial_dist)
+#weather_HMM.viterbi(observed,initial_dist)

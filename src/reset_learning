@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm ../data/pickled_emission_probs
+rm ../data/pickled_observations
+rm ../data/pickled_state_trans
+rm ../data/pickled_states

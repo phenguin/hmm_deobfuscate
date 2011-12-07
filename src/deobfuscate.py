@@ -1,5 +1,7 @@
+import pickle
 import pdb
-import hmm
+#import hmm
+from ghmm import *
 import numpy
 import itertools
 from cvxopt import matrix,solvers
@@ -14,6 +16,11 @@ EL_corpus = '../data/words.txt'
 wordlist = '../data/words.txt'
 inputs_path = '../data/training_data.txt'
 outputs_path = '../data/training_outputs.txt'
+states_file = '../data/pickled_states'
+observations_file = '../data/pickled_observations'
+state_trans_file = '../data/pickled_state_trans'
+emission_probs_file = '../data/pickled_emission_probs'
+
 
 def prefix_rel_freq(prefix1,prefix2,corpus=EL_corpus):
   """Computes ratio of words in the corpus beginning with prefix1
@@ -44,10 +51,7 @@ def word_rel_freq(word,prefix,corpus=EL_corpus):
       words_gen2 if
       w.startswith(prefix))
 
-
-
-
-def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
+def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
     training_outputs = outputs_path):
   """Build hmm states from words in dict_path"""
   words = open ( dict_path, 'r' )
@@ -75,9 +79,11 @@ def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
   for state in trans:
     # self transition probability param'd by eta
     trans[state][state] = 1 - eta
+    #for s in states:
+      #if s not in trans[state].keys():
+        #trans[state][s] = 0
 
   trans['word_end']['word_end'] = 0 # except for word_end
-  states.sort()
 
   num_states = len(states)
   num_obs = len(observations)
@@ -108,8 +114,10 @@ def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
   # construct q
   for o,a in paired:
     if a == '-':
+      print last_a,o
       q[to_index(last_a,o)] += 1
     elif a != ' ':
+      print a,o
       q[to_index(a,o)] += 1
       last_a = a
   q = -q # Invert since we want maximum not minimum
@@ -129,16 +137,56 @@ def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
     for o in observations:
       emission_probs[s][o] = sol[to_index(s[-1],o)]
 
-  return (tuple(states), trans, observations,emission_probs)
+  return (tuple(states), observations, trans, emission_probs)
 
-#states, trans_probs = init_hmm(wordlist)
+def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
+    training_outputs = outputs_path):
+  try:
+    states = pickle.load(open(states_file))
+    observations = pickle.load(open(observations_file))
+    trans_probs = pickle.load(open(state_trans_file))
+    emission_probs = pickle.load(open(emission_probs_file))
+    return (states,observations,trans_probs,emission_probs)
+  except IOError, e:
+    states,observations,trans_probs,emission_probs = learn_hmm(dict_path,training_inputs,training_outputs)
+    pickle.dump(states,open(states_file,'w'))
+    pickle.dump(observations,open(observations_file,'w'))
+    pickle.dump(trans_probs,open(state_trans_file,'w'))
+    pickle.dump(emission_probs,open(emission_probs_file,'w'))
+    return (states,observations,trans_probs,emission_probs)
 
-# Testing stuff
-#print states
-#print
-#sortedkeys = sorted( trans_probs.keys() )
-#print sortedkeys
-#print
-#for state in sortedkeys:
-  #print state, ' - ' ,trans_probs[state]
+states,observations,trans_probs,emission_probs = init_hmm()
+N = len(states)
+M = len(observations)
 
+state_indices = dict( [(s,states.index(s)) for s in states] )
+index_states = dict( [(states.index(s),s) for s in states] )
+obs_indices = dict( [(o,observations.index(o)) for o in observations] )
+index_obs = dict( [(observations.index(o),o) for o in observations] )
+
+print 'trying to deobfuscate'
+A = [[trans_probs[index_states[s1]].get(index_states[s2],0) for s2 in
+  range(N)]
+  for s1 in range(N)]
+
+B = [[emission_probs[index_states[s]].get(index_obs[o],0) for o in
+  range(M)]
+  for s in range(N)]
+
+pi = [0] * N
+pi[state_indices['word_start']] = 1
+sigma = IntegerRange(0,M)
+
+m = HMMFromMatrices(sigma,DiscreteDistribution(sigma),A,B,pi)
+
+def string_to_obs(s):
+  return EmissionSequence(sigma, [obs_indices[o] for o in list(s)])
+
+def my_viterbi(s):
+  a,b = m.viterbi(string_to_obs(s))
+  return [index_states[x] for x in a]
+
+#deobfuscate_hmm = hmm.HMM(states,observations,trans_probs,emission_probs)
+#answer = deobfuscate_hmm.viterbi(list('beau *** tiful'))
+#print answer
+#answer = deobfuscate_hmm.viterbi(list('beau *** t iful cat haaas fu * r'))
