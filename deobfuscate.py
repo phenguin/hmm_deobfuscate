@@ -45,14 +45,14 @@ def init_hmm(dict_path):
   for w in words:
     w = w[:-1] # remove EOL char
     for i in range( len(w) ): 
-      new = (i,w[i])
+      new = w[:i+1]
       if new not in states:
         states.append(new)
         trans[new] = {}
       if i == 0:
         trans['word_start'][new] = prefix_rel_freq(w[:i+1],'')
       else:
-        prev = (i-1,w[i-1])
+        prev = w[:i]
         trans[prev][new] = prefix_rel_freq(w[:i+1],w[:i])
       if i == len(w) - 1: # last character in a word
         trans[new]['word_end'] = word_rel_freq(w,w[:i])
