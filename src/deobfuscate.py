@@ -12,8 +12,8 @@ eta = 0.7
 epsilon = None
 
 # Default corpus to use for english language word frequencies
-EL_corpus = '../data/bigwords.txt'
-wordlist = '../data/bigwords.txt'
+EL_corpus = '../data/freq_corpus.txt'
+wordlist = '../data/words.txt'
 inputs_path = '../data/training_data.txt'
 outputs_path = '../data/training_outputs.txt'
 states_file = '../data/pickled_states'
@@ -58,6 +58,7 @@ def word_rel_freq(word,prefix,corpus=EL_corpus):
 def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
     training_outputs = outputs_path):
   """Build hmm states from words in dict_path"""
+  print 'initing counts'
   init_counts()
   words = open ( dict_path, 'r' )
   states = set(['word_start'])
@@ -67,6 +68,7 @@ def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
   # Compute states and state transition probabilities
   for w in words:
     w = w.lower()
+    print w
     w = w[:-1] # remove EOL char
     for i in range( len(w) ): 
       new = w[:i+1]
@@ -160,13 +162,14 @@ def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
     return (states,observations,trans_probs,emission_probs)
 
 states,observations,trans_probs,emission_probs = init_hmm()
+print 'out of init'
 N = len(states)
 M = len(observations)
 
-state_indices = dict( [(s,states.index(s)) for s in states] )
-index_states = dict( [(states.index(s),s) for s in states] )
-obs_indices = dict( [(o,observations.index(o)) for o in observations] )
-index_obs = dict( [(observations.index(o),o) for o in observations] )
+state_indices = dict( [(s,i) for s,i in zip(states,range(N))] )
+index_states = dict( [(i,s) for s,i in zip(states,range(N))] )
+obs_indices = dict( [(o,i) for o,i in zip(observations,range(M))] )
+index_obs = dict( [(i,o) for o,i in zip(observations,range(M))] )
 
 print 'trying to deobfuscate'
 A = [[trans_probs[index_states[s1]].get(index_states[s2],0) for s2 in
@@ -186,11 +189,17 @@ m = HMMFromMatrices(sigma,DiscreteDistribution(sigma),A,B,pi)
 def string_to_obs(s):
   return EmissionSequence(sigma, [obs_indices[o] for o in list(s)])
 
-def my_viterbi(s):
-  a,b = m.viterbi(string_to_obs(s))
-  return [index_states[x] for x in a]
-
-#deobfuscate_hmm = hmm.HMM(states,observations,trans_probs,emission_probs)
-#answer = deobfuscate_hmm.viterbi(list('beau *** tiful'))
-#print answer
-#answer = deobfuscate_hmm.viterbi(list('beau *** t iful cat haaas fu * r'))
+def deobfuscate(s):
+  a,b = m.viterbi(string_to_obs(' '+s))
+  def split_list(ls,split_on):
+    result = []
+    while split_on in ls:
+      i = ls.index(split_on)
+      temp = ls[:i]
+      if temp != []:
+        result.append(temp[-1])
+      ls = ls[i+1:]
+    if ls != []: result.append(ls[-1])
+    return result
+  return ' '.join(split_list([index_states[x] for x in
+    a],'word_start'))
