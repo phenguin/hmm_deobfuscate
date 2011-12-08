@@ -1,3 +1,8 @@
+##################################################
+# Title: deobfuscate.py
+# Descr: Hidden markov model based approach to text deobfuscation
+# Author: Justin Cullen
+##################################################
 import pickle
 import pdb
 #import hmm
@@ -173,11 +178,12 @@ def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
     pickle.dump(trans_probs,open(state_trans_file,'w'))
     pickle.dump(emission_probs,open(emission_probs_file,'w'))
     return (states,observations,trans_probs,emission_probs)
-
+# Initializei HMM
 states,observations,trans_probs,emission_probs = init_hmm()
 N = len(states)
 M = len(observations)
 
+# Convert to form that GHMM can use
 state_indices = dict( [(s,i) for s,i in zip(states,range(N))] )
 index_states = dict( [(i,s) for s,i in zip(states,range(N))] )
 obs_indices = dict( [(o,i) for o,i in zip(observations,range(M))] )

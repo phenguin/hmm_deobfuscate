@@ -1,0 +1,10 @@
+Basic usage:
+Run src/deobfuscate_tests.py in interpreter.
+run the function deobfuscate(s) on a string s to see how the 
+algorithm decodes it.
+
+The HMM is cached in the pickled_* files in the data/ directory.
+If you want to mess with the training data files/ dictionary /
+word_frequency corpus.  Make sure to run the src/reset_learning script
+to clear these cached files.  The program will use the HMM stored here
+if these files exist.

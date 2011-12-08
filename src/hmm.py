@@ -1,3 +1,10 @@
+##################################################
+# Title: hmm.py
+# Descr: Silly slow HMM viterbi algorithm implementation
+#        not actually used in deobfuscation, but I tried so I'll leave
+#        it here
+# Author: Justin Cullen
+##################################################
 import pdb
 
 class HMM(object):
