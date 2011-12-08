@@ -58,7 +58,6 @@ def word_rel_freq(word,prefix,corpus=EL_corpus):
 def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
     training_outputs = outputs_path):
   """Build hmm states from words in dict_path"""
-  print 'initing counts'
   init_counts()
   words = open ( dict_path, 'r' )
   states = set(['word_start'])
@@ -83,11 +82,7 @@ def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
           trans[new]['word_start'] = word_rel_freq(w,w[:i])
 
   for state in trans:
-    # self transition probability param'd by eta
     trans[state][state] = 1 - eta
-    #for s in states:
-      #if s not in trans[state].keys():
-        #trans[state][s] = 0
   states = list(states)
   num_states = len(states)
   num_obs = len(observations)
@@ -129,6 +124,7 @@ def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
   b = matrix(numpy.ones(27),tc='d')
   # construct q
   for o,a in paired:
+    if o not in observations: continue
     if a == '-':
       q[to_index(last_a,o)] += 1
     elif a != ' ':
@@ -149,7 +145,6 @@ def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
   # Solve linear program
   sol = list(solvers.qp(P,q,G,h,A,b)['x'])
 
-  print len(states),len(observations),len(states)*len(observations)
   # Convert solution into dictionary of emission probabilities
   emission_probs = dict( [(s,{}) for s in states] )
   for s in emission_probs.keys():
@@ -163,11 +158,13 @@ def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
 
 def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
     training_outputs = outputs_path):
+  print 'Initializing states and state transitions'
   try:
     states = pickle.load(open(states_file))
     observations = pickle.load(open(observations_file))
     trans_probs = pickle.load(open(state_trans_file))
     emission_probs = pickle.load(open(emission_probs_file))
+    print 'Cached verions exist - using those'
     return (states,observations,trans_probs,emission_probs)
   except IOError, e:
     states,observations,trans_probs,emission_probs = learn_hmm(dict_path,training_inputs,training_outputs)
@@ -178,7 +175,6 @@ def init_hmm(dict_path = wordlist, training_inputs = inputs_path,
     return (states,observations,trans_probs,emission_probs)
 
 states,observations,trans_probs,emission_probs = init_hmm()
-print 'out of init'
 N = len(states)
 M = len(observations)
 
@@ -187,7 +183,7 @@ index_states = dict( [(i,s) for s,i in zip(states,range(N))] )
 obs_indices = dict( [(o,i) for o,i in zip(observations,range(M))] )
 index_obs = dict( [(i,o) for o,i in zip(observations,range(M))] )
 
-print 'trying to deobfuscate'
+print "Initializing HMM solver"
 A = [[trans_probs[index_states[s1]].get(index_states[s2],0) for s2 in
   range(N)]
   for s1 in range(N)]
