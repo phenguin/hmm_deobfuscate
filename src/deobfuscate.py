@@ -122,6 +122,7 @@ def learn_hmm(dict_path = wordlist, training_inputs = inputs_path,
       print last_a,o
       q[to_index(last_a,o)] += 1
     elif a != ' ':
+      if a not in ascii_lowercase: continue
       print a,o
       q[to_index(a,o)] += 1
       last_a = a
@@ -189,6 +190,9 @@ m = HMMFromMatrices(sigma,DiscreteDistribution(sigma),A,B,pi)
 def string_to_obs(s):
   return EmissionSequence(sigma, [obs_indices[o] for o in list(s)])
 
+# Wrapped function to simply deobfuscate a given string using the
+# parameters specified in the model.  This is the main function of the
+# module
 def deobfuscate(s):
   a,b = m.viterbi(string_to_obs(' '+s))
   def split_list(ls,split_on):
