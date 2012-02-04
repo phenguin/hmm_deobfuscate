@@ -8,3 +8,20 @@ If you want to mess with the training data files/ dictionary /
 word_frequency corpus.  Make sure to run the src/reset_learning script
 to clear these cached files.  The program will use the HMM stored here
 if these files exist.
+
+Sorry the code if poorly commented and overall kind of hacked
+together.. had lots of things to fix and little time.
+
+File Descriptions:
+JCullenProjectReport.pdf is my project report
+OriginalPaper.pdf is the paper the project is based on
+data/words.txt - the dictionary of words used
+data/training_data.txt - obfuscated training data
+data/training_outputs.txt - manually cleaned up training data
+data/freq_corpus.txt - email corpus used for english word frequencies
+data/pickled_* - cached versions of data structues used to save time
+src/hmm.py - crappy implementation of a hmm I tried to use but
+             abandoned because it was too slow..
+src/deobfuscate.py -  main source file
+src/deobfuscate_tests.py - tests
+src/reset_learnin - bash script to remove cached data structures
